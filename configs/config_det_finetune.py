@@ -25,7 +25,7 @@ task_specific_coco_dataset_config = {
     'object_detection':
         D(
             name='object_detection',
-            tfds_name='coco/2017',
+            # tfds_name='coco/2017',
             train_filename='instances_train2017.json',
             val_filename='instances_val2017.json',
         ),
