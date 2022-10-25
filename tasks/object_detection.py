@@ -254,13 +254,13 @@ class TaskObjectDetection(task_lib.Task):
      ) = new_outputs
 
     # Log/accumulate metrics.
-    if self._coco_metrics.gt_annotations_path:
-      self._coco_metrics.record_detection(
-          image_ids, pred_bboxes_rescaled, pred_classes, scores)
-    else:
-      self._coco_metrics.record_detection(
-          image_ids, pred_bboxes_rescaled, pred_classes, scores,
-          gt_bboxes_rescaled, gt_classes, areas=area, is_crowds=is_crowd)
+    # if self._coco_metrics.gt_annotations_path:
+    #   self._coco_metrics.record_detection(
+    #       image_ids, pred_bboxes_rescaled, pred_classes, scores)
+    # else:
+    #   self._coco_metrics.record_detection(
+    #       image_ids, pred_bboxes_rescaled, pred_classes, scores,
+    #       gt_bboxes_rescaled, gt_classes, areas=area, is_crowds=is_crowd)
 
     # Image summary.
     if eval_step <= 10 or ret_results:
@@ -280,6 +280,11 @@ class TaskObjectDetection(task_lib.Task):
             image_ids_, train_step, tag,
             max_images_shown=(-1 if ret_results else 3))
 
+      records = {'image_ids': image_ids, 'pred_bboxes': pred_bboxes_rescaled,
+              'pred_classes': pred_classes, 'scores': scores,
+              'gt_bboxes': gt_bboxes_rescaled, 'gt_classes': gt_classes,
+              'areas': area}
+      ret_images['records'] = records
     if ret_results:
       return ret_images
 
@@ -295,6 +300,7 @@ class TaskObjectDetection(task_lib.Task):
       result as a `dict`.
     """
     metrics = self.compute_scalar_metrics(step)
+    print(metrics)
     with summary_writer.as_default():
       with tf.name_scope(eval_tag):
         self._log_metrics(metrics, step)

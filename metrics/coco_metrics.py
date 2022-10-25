@@ -185,6 +185,8 @@ class CocoObjectDetectionMetric(_CocoNonPanopticMetric):
             'category_id': int(pred_classes[i, idx]),
         })
 
+    print("record added")
+    print(self.detections)
     if gt_classes is not None:
       for i in range(batch_size):
         self.manual_dataset['images'].append({

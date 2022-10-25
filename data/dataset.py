@@ -20,6 +20,7 @@ import functools
 import operator
 from typing import Callable
 import ml_collections
+import numpy as np
 
 import registry
 import tensorflow as tf
@@ -43,9 +44,9 @@ class Dataset(abc.ABC):
     """Constructs the dataset."""
     self.config = config.dataset
     self.task_config = config.task
-    self.builder = tfds.builder(self.config.tfds_name,
-                                data_dir=self.config.get('data_dir', None))
-    self.builder.download_and_prepare()
+    # self.builder = tfds.builder(self.config.tfds_name,
+    #                            data_dir=self.config.get('data_dir', None))
+    # self.builder.download_and_prepare()
     self.allowed_tasks = []
 
   def pipeline(self,
@@ -69,17 +70,32 @@ class Dataset(abc.ABC):
       # For TFDS, pass input_context using read_config to make TFDS read
       # different parts of the dataset on different workers.
       read_config = tfds.ReadConfig(input_context=input_context)
-      if isinstance(split, list):
-        dataset = self.builder.as_dataset(
-            split=split[0], shuffle_files=True, read_config=read_config)
-        for i in range(1, len(split)):
-          dataset.concatenate(self.builder.as_dataset(
-              split=split[i], shuffle_files=True, read_config=read_config))
+      # if isinstance(split, list):
+      #   dataset = self.builder.as_dataset(
+      #       split=split[0], shuffle_files=True, read_config=read_config)
+      #   for i in range(1, len(split)):
+      #     dataset.concatenate(self.builder.as_dataset(
+      #         split=split[i], shuffle_files=True, read_config=read_config))
+      # else:
+      #   dataset = self.builder.as_dataset(
+      #       split=split, shuffle_files=True, read_config=read_config)
+      # if config.cache_dataset:
+      #   dataset = dataset.cache()
+
+      # dataset = self.builder.as_dataset(
+      #       split=split, shuffle_files=True, read_config=read_config)
+      # if config.cache_dataset:
+      #   dataset = dataset.cache()
+      # print(dataset)
+      # exit()
+
+
+      if training:
+        dataset = tf.data.TFRecordDataset("/content/drive/MyDrive/Matority/data/color_fashion_tfrec_train")
       else:
-        dataset = self.builder.as_dataset(
-            split=split, shuffle_files=True, read_config=read_config)
-      if config.cache_dataset:
-        dataset = dataset.cache()
+        dataset = tf.data.TFRecordDataset("/content/drive/MyDrive/Matority/data/color_fashion_tfrec_val")
+
+
 
       if input_context:
         batch_size = input_context.get_per_replica_batch_size(global_batch_size)
@@ -97,9 +113,60 @@ class Dataset(abc.ABC):
         dataset = dataset.shuffle(10 * batch_size)
         dataset = dataset.repeat()
 
+
+      
+
+      
+
+
+      # print(dataset)
+      # for raw_record in dataset:
+      #   raw_example = raw_record
+      #   example = tf.train.Example()
+      #   example.ParseFromString(raw_record.numpy())
+      #   # print(example)
+      #   break
+      # feature_description = {
+      #   'image/encoded': tf.io.VarLenFeature(tf.string),
+      #   'image/object/bbox/xmax': tf.io.VarLenFeature(tf.float32),
+      #   'image/object/bbox/xmin': tf.io.VarLenFeature(tf.float32),
+      #   'image/object/bbox/ymax': tf.io.VarLenFeature(tf.float32),
+      #   'image/object/bbox/ymin': tf.io.VarLenFeature(tf.float32),
+      #   'image/object/class/label': tf.io.VarLenFeature(tf.int64),
+      # }
+
+      # def _parse_function(example_proto):
+      #   # Parse the input `tf.train.Example` proto using the dictionary above.
+      #   return tf.io.parse_single_example(example_proto, feature_description)
+
+      # parsed = _parse_function(raw_example)
+      # dense_img = tf.sparse.to_dense(parsed['image/encoded'])
+      # print(dense_img.shape)
+      # # print(tf.image.decode_image(dense_img, dtype=tf.float32))
+      # decoded_img = tf.io.decode_jpeg(dense_img[0], channels = 3)
+      # print(decoded_img.numpy())
+      # print(parsed['image/object/bbox/xmax'])
+      # exit()
+
+
+
+      # print(dataset)
+      print("Pre-extract")
       dataset = dataset.map(
           lambda x: self.extract(x, training),
           num_parallel_calls=tf.data.experimental.AUTOTUNE)
+      print("Post-extract")
+
+      # for raw_example in dataset:
+      #   print(raw_example)
+      #   exit()
+
+
+      # dataset = dataset.map(
+      #     lambda x: self.extract(x, training),
+      #     num_parallel_calls=tf.data.experimental.AUTOTUNE)
+      
+
       if process_single_example:
         dataset = process_single_example(
             dataset, config.batch_duplicates, training)

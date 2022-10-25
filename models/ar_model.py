@@ -206,7 +206,9 @@ class ARTrainer(model_lib.Trainer):
     token_weights_notpad = tf.where(
         is_padding, tf.zeros_like(token_weights), token_weights)
 
+    print("before logits")
     logits = self.model(image, input_seq)
+    print("after logits")
     losses = model_utils.get_loss(
         logits, target_seq, self.config.train.loss_type)
     loss = tf.reduce_sum(losses * token_weights) / (
